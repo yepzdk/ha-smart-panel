@@ -1,0 +1,52 @@
+{
+  "entity": {
+    "button": {
+      "reload": {
+        "default": "mdi:reload"
+      },
+      "update_ha_app": {
+        "default": "mdi:home-assistant"
+      }
+    },
+    "number": {
+      "brightness": {
+        "default": "mdi:brightness-6"
+      }
+    },
+    "sensor": {
+      "ha_app_version": {
+        "default": "mdi:home-assistant"
+      },
+      "last_seen": {
+        "default": "mdi:clock-check-outline"
+      }
+    },
+    "switch": {
+      "screen": {
+        "default": "mdi:monitor",
+        "state": {
+          "off": "mdi:monitor-off"
+        }
+      },
+      "maintenance_mode": {
+        "default": "mdi:wrench"
+      },
+      "auto_brightness": {
+        "default": "mdi:brightness-auto"
+      }
+    },
+    "update": {
+      "panel_app": {
+        "default": "mdi:tablet-dashboard"
+      }
+    }
+  },
+  "services": {
+    "navigate": {
+      "service": "mdi:compass-outline"
+    },
+    "factory_reset": {
+      "service": "mdi:restore-alert"
+    }
+  }
+}

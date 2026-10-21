@@ -1,0 +1,184 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Smart Panel",
+        "description": "Provision and manage Android wall panels. After setup, open Smart Panels in the sidebar to enter the Wi-Fi details and show the provisioning QR code."
+      }
+    },
+    "abort": {
+      "single_instance_allowed": "Smart Panel is already set up. It manages every panel from one place."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Provisioning settings",
+        "description": "New panels join this Wi-Fi network and open Home Assistant at this URL.",
+        "data": {
+          "wifi_ssid": "Wi-Fi network name",
+          "wifi_password": "Wi-Fi password",
+          "wifi_security": "Wi-Fi security",
+          "wifi_hidden": "Hidden network",
+          "ha_url": "Home Assistant URL"
+        },
+        "data_description": {
+          "wifi_ssid": "The network name (SSID), at most 32 bytes.",
+          "wifi_password": "Leave empty to keep the saved password. Not needed for an open network.",
+          "wifi_security": "WPA covers WPA, WPA2 and WPA2/WPA3 mixed networks. WPA3-only networks cannot be used for provisioning. NONE is an open network.",
+          "wifi_hidden": "Turn on when the network does not broadcast its name.",
+          "ha_url": "The address panels on your network use to reach Home Assistant, for example http://192.168.1.10:8123. Panels also report their status here."
+        }
+      }
+    },
+    "error": {
+      "required": "Fill in this field.",
+      "invalid_url": "Enter a full http:// or https:// address without a query, fragment or comma.",
+      "password_required": "Enter the Wi-Fi password, or choose NONE for an open network.",
+      "too_long": "This value is too long."
+    }
+  },
+  "config_subentries": {
+    "panel": {
+      "entry_type": "Panel",
+      "initiate_flow": {
+        "user": "Add panel"
+      },
+      "step": {
+        "user": {
+          "title": "Add panel",
+          "description": "Choose the Home Assistant app registration of the panel. Registrations of the minimal app, which panels run, are marked as likely panels and listed first.",
+          "data": {
+            "mobile_app_entry_id": "App registration"
+          },
+          "data_description": {
+            "mobile_app_entry_id": "The panel is linked right away and starts reporting its status."
+          }
+        }
+      },
+      "abort": {
+        "no_candidates": "Every Home Assistant app registration is already added as a panel. Provision a new panel first.",
+        "already_configured": "This registration is already added as a panel."
+      }
+    }
+  },
+  "selector": {
+    "panel_candidate": {
+      "options": {
+        "likely_panel": "likely panel"
+      }
+    }
+  },
+  "entity": {
+    "binary_sensor": {
+      "connectivity": {
+        "name": "Connectivity"
+      }
+    },
+    "button": {
+      "reload": {
+        "name": "Reload"
+      },
+      "restart": {
+        "name": "Restart"
+      },
+      "update_ha_app": {
+        "name": "Reinstall Home Assistant app"
+      }
+    },
+    "number": {
+      "brightness": {
+        "name": "Brightness"
+      }
+    },
+    "sensor": {
+      "ha_app_version": {
+        "name": "Home Assistant app version"
+      },
+      "last_seen": {
+        "name": "Last seen"
+      }
+    },
+    "switch": {
+      "screen": {
+        "name": "Screen"
+      },
+      "maintenance_mode": {
+        "name": "Maintenance mode"
+      },
+      "auto_brightness": {
+        "name": "Automatic brightness"
+      }
+    },
+    "update": {
+      "panel_app": {
+        "name": "Panel app"
+      }
+    }
+  },
+  "services": {
+    "navigate": {
+      "name": "Navigate",
+      "description": "Opens Home Assistant on a panel, freshly loaded, optionally at a path.",
+      "fields": {
+        "device_id": {
+          "name": "Panel",
+          "description": "The panel to navigate."
+        },
+        "path": {
+          "name": "Path",
+          "description": "Path to open, starting with /, for example /lovelace/kitchen. Leave empty for the default dashboard."
+        }
+      }
+    },
+    "factory_reset": {
+      "name": "Factory reset",
+      "description": "Erases everything on a panel. It has to be provisioned again with the QR code.",
+      "fields": {
+        "device_id": {
+          "name": "Panel",
+          "description": "The panel to erase."
+        },
+        "confirm": {
+          "name": "Confirm",
+          "description": "Must be on to erase the panel."
+        }
+      }
+    }
+  },
+  "exceptions": {
+    "invalid_extra_value": {
+      "message": "The value for {name} cannot contain a comma."
+    },
+    "panel_not_registered": {
+      "message": "The Home Assistant app registration of {panel} is not loaded."
+    },
+    "send_failed": {
+      "message": "Could not send the command to {panel}: {error}"
+    },
+    "unknown_command": {
+      "message": "Unknown command: {command}."
+    },
+    "invalid_brightness": {
+      "message": "Brightness must be a whole number from 0 to 255."
+    },
+    "brightness_unknown": {
+      "message": "The panel has not reported a brightness, so there is no value to keep."
+    },
+    "invalid_path": {
+      "message": "The path must start with /."
+    },
+    "factory_reset_not_confirmed": {
+      "message": "Confirm the factory reset to erase the panel."
+    },
+    "not_loaded": {
+      "message": "Smart Panel is not loaded."
+    },
+    "device_not_found": {
+      "message": "Device {device_id} is not a Smart Panel."
+    },
+    "release_lookup_failed": {
+      "message": "Could not look up the latest panel app release: {error}"
+    }
+  }
+}

@@ -1,0 +1,25 @@
+navigate:
+  fields:
+    device_id:
+      required: true
+      selector:
+        device:
+          integration: smart_panel
+    path:
+      required: false
+      example: "/lovelace/kitchen"
+      selector:
+        text:
+
+factory_reset:
+  fields:
+    device_id:
+      required: true
+      selector:
+        device:
+          integration: smart_panel
+    confirm:
+      required: true
+      default: false
+      selector:
+        boolean:
