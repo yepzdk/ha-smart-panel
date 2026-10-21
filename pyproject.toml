@@ -1,0 +1,47 @@
+[project]
+name = "ha-smart-panel"
+version = "0.1.0"
+description = "Home Assistant integration that provisions and manages Android wall panels."
+requires-python = ">=3.14.2"
+dependencies = []
+
+[dependency-groups]
+test = [
+    "pytest-homeassistant-custom-component==0.13.365",
+    "home-assistant-frontend==20260826.7",
+    # Imported by mobile_app through cloud, camera, conversation, tts and
+    # assist_pipeline; versions as pinned by those Home Assistant 2026.9.2
+    # integrations.
+    "PyTurboJPEG==1.8.3",
+    "gazetteer-matcher==1.1.0",
+    "ha-ffmpeg==3.2.2",
+    "hassil==3.12.0",
+    "home-assistant-intents==2026.8.28",
+    "mutagen==1.48.1",
+    "pymicro-vad==1.0.1",
+    "pyspeex-noise==1.0.2",
+    "segno==1.6.6",
+    "ruff==0.15.1",
+]
+
+[tool.uv]
+default-groups = ["test"]
+package = false
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+testpaths = ["tests"]
+pythonpath = ["."]
+
+[tool.ruff]
+target-version = "py314"
+
+[tool.ruff.lint]
+select = ["B", "E", "F", "I", "RUF", "SIM", "UP", "W"]
+ignore = ["E501"]
+
+[tool.ruff.lint.isort]
+combine-as-imports = true
+force-sort-within-sections = true
+known-first-party = ["custom_components", "homeassistant"]
