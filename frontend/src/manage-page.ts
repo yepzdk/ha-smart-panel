@@ -365,6 +365,9 @@ export class SmartPanelManage extends LitElement {
         display: grid;
         grid-template-columns: minmax(0, 1fr);
         gap: var(--ha-space-4);
+        /* Each card keeps its own height: opening "More actions" on one card
+           must not stretch its neighbour into what looks like an open card. */
+        align-items: start;
         margin: 0;
         padding: 0;
         list-style: none;
