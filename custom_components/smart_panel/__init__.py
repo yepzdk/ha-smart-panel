@@ -76,7 +76,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: SmartPanelConfigEntry) -
         "Smart Panel",
         webhook_id,
         make_webhook_handler(entry),
-        local_only=True,
+        # Panels may report from anywhere (a vacation home, a boat). Same model
+        # as mobile_app's own webhooks: the 64-hex webhook id is the secret.
+        local_only=False,
         allowed_methods=["POST"],
     )
     entry.async_on_unload(lambda: webhook.async_unregister(hass, webhook_id))

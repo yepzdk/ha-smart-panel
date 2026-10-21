@@ -2,6 +2,7 @@
 
 from datetime import timedelta
 from http import HTTPStatus
+import json
 from typing import Any
 
 from freezegun.api import FrozenDateTimeFactory
@@ -13,9 +14,12 @@ from pytest_homeassistant_custom_component.common import (
 from pytest_homeassistant_custom_component.typing import ClientSessionGenerator
 
 from custom_components.smart_panel.const import DOMAIN
+from homeassistant.components import webhook
 from homeassistant.const import STATE_OFF, STATE_ON, STATE_UNAVAILABLE, STATE_UNKNOWN
 from homeassistant.core import HomeAssistant
+from homeassistant.exceptions import ServiceValidationError
 from homeassistant.helpers import device_registry as dr
+from homeassistant.util.aiohttp import MockRequest
 
 from .conftest import KITCHEN_REF, WEBHOOK_ID, PushRecorder, kitchen_report
 
@@ -203,10 +207,57 @@ async def test_unknown_fields_are_accepted(
     assert hass.states.get(SCREEN).state == STATE_ON
 
 
+async def test_report_from_remote_address_is_accepted(
+    hass: HomeAssistant, setup_integration: MockConfigEntry
+) -> None:
+    """A panel away from home reports from a public address."""
+    request = MockRequest(
+        content=json.dumps(kitchen_report()).encode(),
+        mock_source="test",
+        method="POST",
+        remote="203.0.113.7",
+    )
+    response = await webhook.async_handle_webhook(hass, WEBHOOK_ID, request)
+    await hass.async_block_till_done()
+
+    assert response.status == HTTPStatus.OK
+    assert hass.states.get(SCREEN).state == STATE_ON
+
+
+async def test_screen_off_is_disabled(
+    hass: HomeAssistant,
+    hass_client_no_auth: ClientSessionGenerator,
+    setup_integration: MockConfigEntry,
+    pushes: PushRecorder,
+) -> None:
+    """Screen off is refused until home-assistant/core#176371 is fixed."""
+    await _post(hass, hass_client_no_auth, kitchen_report())
+    pushes.clear()
+
+    with pytest.raises(ServiceValidationError) as err:
+        await hass.services.async_call(
+            "switch", "turn_off", {"entity_id": SCREEN}, blocking=True
+        )
+    assert err.value.translation_key == "screen_off_disabled"
+    assert "176371" in str(err.value)
+    assert "https://github.com/home-assistant/core/issues/176371" in str(err.value)
+    assert len(pushes) == 0
+    assert hass.states.get(SCREEN).state == STATE_ON
+
+
+async def test_screen_state_still_reported(
+    hass: HomeAssistant,
+    hass_client_no_auth: ClientSessionGenerator,
+    setup_integration: MockConfigEntry,
+) -> None:
+    """The screen switch keeps showing a panel whose screen is off."""
+    await _post(hass, hass_client_no_auth, kitchen_report(screen_off=True))
+    assert hass.states.get(SCREEN).state == STATE_OFF
+
+
 @pytest.mark.parametrize(
     ("domain", "service", "entity_id", "data", "action", "extras"),
     [
-        ("switch", "turn_off", SCREEN, {}, "SCREEN_OFF", None),
         ("switch", "turn_on", SCREEN, {}, "SCREEN_ON", None),
         ("switch", "turn_on", MAINTENANCE, {}, "MAINTENANCE_ON", None),
         ("switch", "turn_off", MAINTENANCE, {}, "MAINTENANCE_OFF", None),

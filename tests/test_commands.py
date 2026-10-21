@@ -66,7 +66,6 @@ async def _command(
 @pytest.mark.parametrize(
     ("params", "action", "extras"),
     [
-        ({"command": "screen_off"}, "SCREEN_OFF", None),
         ({"command": "screen_on"}, "SCREEN_ON", None),
         ({"command": "brightness", "value": 0}, "SET_BRIGHTNESS", "brightness:0"),
         ({"command": "brightness", "value": 255}, "SET_BRIGHTNESS", "brightness:255"),
@@ -157,6 +156,30 @@ async def test_command_invalid_input(
     )
     assert not response["success"]
     assert response["error"]["code"] == "invalid_input"
+    assert len(pushes) == 0
+
+
+async def test_screen_off_is_disabled(
+    hass: HomeAssistant,
+    hass_ws_client: WebSocketGenerator,
+    setup_integration: MockConfigEntry,
+    pushes: PushRecorder,
+) -> None:
+    """Screen off is refused until home-assistant/core#176371 is fixed."""
+    pushes.clear()
+    response = await _command(
+        hass_ws_client,
+        hass,
+        panel_id=_panel_id(setup_integration),
+        command="screen_off",
+    )
+    assert not response["success"]
+    assert response["error"]["code"] == "invalid_input"
+    assert "176371" in response["error"]["message"]
+    assert (
+        "https://github.com/home-assistant/core/issues/176371"
+        in response["error"]["message"]
+    )
     assert len(pushes) == 0
 
 

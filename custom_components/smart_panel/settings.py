@@ -1,12 +1,14 @@
 """Provisioning settings: defaults and the validator shared by every writer."""
 
 from collections.abc import Mapping
+from ipaddress import ip_address
 from typing import Any
 
 from yarl import URL
 
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.network import NoURLAvailableError, get_url
+from homeassistant.util.network import is_local
 
 from .const import (
     CONF_HA_URL,
@@ -27,6 +29,10 @@ ERROR_REQUIRED = "required"
 ERROR_INVALID_URL = "invalid_url"
 ERROR_PASSWORD_REQUIRED = "password_required"
 ERROR_TOO_LONG = "too_long"
+ERROR_HTTPS_REQUIRED = "https_required"
+
+# Host names that only resolve on the local network.
+LOCAL_HOST_SUFFIXES = (".local", ".home.arpa")
 
 
 def default_ha_url(hass: HomeAssistant) -> str:
@@ -83,6 +89,8 @@ def validate_settings(
         errors[CONF_HA_URL] = ERROR_REQUIRED
     elif not _is_valid_ha_url(ha_url):
         errors[CONF_HA_URL] = ERROR_INVALID_URL
+    elif not _is_secure_or_local(URL(ha_url)):
+        errors[CONF_HA_URL] = ERROR_HTTPS_REQUIRED
 
     options = {
         CONF_WIFI_SSID: ssid,
@@ -112,6 +120,23 @@ def _is_valid_ha_url(value: str) -> bool:
         and not url.query_string
         and not url.fragment
     )
+
+
+def _is_secure_or_local(url: URL) -> bool:
+    """Return whether the URL is https, or http to a host on the local network.
+
+    Panels may be away from home, and their status reports carry the webhook
+    id, so plain http is only accepted where it cannot leave the local network.
+    """
+    if url.scheme == "https":
+        return True
+    host = (url.host or "").lower().rstrip(".")
+    if host == "localhost" or host.endswith(LOCAL_HOST_SUFFIXES):
+        return True
+    try:
+        return is_local(ip_address(host))
+    except ValueError:
+        return False
 
 
 def settings_payload(hass: HomeAssistant, options: Mapping[str, Any]) -> dict[str, Any]:

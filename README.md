@@ -12,8 +12,9 @@ it fullscreen. This integration is the Home Assistant side:
 - **Setup**: enter the Wi-Fi details once and get the provisioning QR code to
   scan on a factory-reset device, with a step-by-step guide.
 - **Manage**: see every panel's status and send it commands in a click: screen
-  on/off, brightness, reload, open a page, maintenance mode, restart, app
-  updates, and factory reset.
+  on (screen off is temporarily disabled, see the Screen entity below),
+  brightness, reload, open a page, maintenance mode, restart, app updates, and
+  factory reset.
 - **Automations**: each panel is a device with entities and actions.
 
 ## Status
@@ -26,9 +27,11 @@ it fullscreen. This integration is the Home Assistant side:
 - Panels running the HA Panel DPC 0.6.0 or newer. Older panels receive
   commands but cannot report their status; update them first with
   **Update** under *Panel app* on the Manage tab.
-- The Home Assistant address you enter must be reachable from the panels on
-  your local network. Panels report their status there, and reports from
-  outside the local network are refused.
+- The Home Assistant address you enter must be reachable from where the
+  panels are; panels report their status there. Use `https://` unless the
+  address is local: `http://` is only accepted for a private, loopback or
+  link-local IP address, `localhost`, or a `.local` or `.home.arpa` name. See
+  [Panels away from home](#panels-away-from-home).
 
 ## Installation
 
@@ -69,13 +72,25 @@ login can map the panels' fixed IP addresses to the panel user. Anyone using
 such an address is logged in as that user, and behind a reverse proxy the
 proxy must be listed in `trusted_proxies`.
 
+## Panels away from home
+
+A panel does not have to be on the same network as Home Assistant, for
+example in a vacation home, on a boat or at the office:
+
+- Enter an `https://` Home Assistant address that is reachable from where the
+  panel is, for example your external URL.
+- The Companion app on the panel must be able to reach Home Assistant's
+  external URL, since commands reach the panel through it.
+- The QR code and the status address contain the webhook id, which is the
+  secret that lets a panel report its status. Keep printed QR codes private.
+
 ## Entities and actions
 
 Each panel is a device with:
 
 | Entity | What it does |
 |---|---|
-| Screen | Switch: off shows a black overlay; the panel stays connected |
+| Screen | Switch: shows whether the screen is on. Turning it off is disabled until [Home Assistant issue 176371](https://github.com/home-assistant/core/issues/176371) is fixed; turning it on still works |
 | Brightness | Number, 0–255 |
 | Automatic brightness | Switch: hand brightness to the light sensor |
 | Maintenance mode | Switch: unpins the app and enables the status bar until turned off or the panel restarts |

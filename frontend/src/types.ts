@@ -85,8 +85,15 @@ export interface Panel {
   entities: Record<string, string>;
 }
 
+/** Why turning the screen off is disabled for now, with a link to the reason. */
+export interface ScreenOffDisabled {
+  reason_url: string;
+}
+
 export interface PanelsMessage {
   panels: Panel[];
+  /** Set while turning the screen off is disabled. */
+  screen_off_disabled: ScreenOffDisabled | null;
 }
 
 export interface Candidate {

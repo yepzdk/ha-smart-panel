@@ -1,5 +1,6 @@
 import {
   mdiAlertCircleOutline,
+  mdiAlertOutline,
   mdiChevronDown,
   mdiClose,
   mdiInformationOutline,
@@ -29,6 +30,7 @@ import type {
   Panel,
   PanelCommand,
   PanelStatus,
+  ScreenOffDisabled,
 } from "./types";
 
 /** The status values a command changes, shown right away until the panel reports. */
@@ -66,6 +68,10 @@ export class SmartPanelCard extends LitElement {
 
   /** The current time, from the list, so relative times move on. */
   @property({ attribute: false }) accessor now = new Date();
+
+  /** Set while turning the screen off is disabled; turning it on still works. */
+  @property({ attribute: false }) accessor screenOffDisabled: ScreenOffDisabled | null =
+    null;
 
   @state() private accessor _pending: ReadonlySet<Action> = new Set();
 
@@ -228,12 +234,16 @@ export class SmartPanelCard extends LitElement {
     >`;
   }
 
-  /** A row with a label, a line about the state, and a control at the end. */
+  /**
+   * A row with a label, a line about the state, and a control at the end. A
+   * note, when given, spans the full width below them.
+   */
   private _renderRow(
     id: string,
     label: string,
     description: string | TemplateResult,
     control: TemplateResult,
+    note: TemplateResult | typeof nothing = nothing,
   ): TemplateResult {
     return html`<div class="row">
       <div class="row-text">
@@ -243,15 +253,18 @@ export class SmartPanelCard extends LitElement {
         >
       </div>
       <div class="row-control">${control}</div>
+      ${note}
     </div>`;
   }
 
+  /** `describedBy` adds ids to the row description, like a note below the row. */
   private _renderSwitch(
     id: string,
     checked: boolean,
     disabled: boolean,
     busy: boolean,
     onChange: (checked: boolean) => void,
+    describedBy: readonly string[] = [],
   ): TemplateResult {
     return html`
       ${busy ? html`<span class="spinner" aria-hidden="true"></span>` : nothing}
@@ -262,7 +275,7 @@ export class SmartPanelCard extends LitElement {
         .checked=${checked}
         ?disabled=${disabled || busy}
         aria-labelledby="${id}-label"
-        aria-describedby="${id}-description"
+        aria-describedby=${[`${id}-description`, ...describedBy].join(" ")}
         aria-busy=${busy ? "true" : "false"}
         @change=${(event: Event) =>
           onChange((event.target as HTMLInputElement).checked)}
@@ -277,13 +290,35 @@ export class SmartPanelCard extends LitElement {
         ? t("state_off")
         : t("state_on")
       : t("state_unknown");
+    const muted = this.screenOffDisabled;
+    // While muted the switch can only turn a screen that is off back on.
+    const cannotTurnOff = Boolean(muted && !status?.screen_off);
+    const note = muted
+      ? html`<div class="alert warning row-note" id="screen-note">
+          ${icon(mdiAlertOutline)}
+          <span class="message"
+            >${t("screen_off_disabled")}
+            <a href=${muted.reason_url} target="_blank" rel="noopener noreferrer"
+              >${t("screen_off_disabled_link")}<span class="visually-hidden">
+                ${t("opens_new_tab")}</span
+              ></a
+            ></span
+          >
+        </div>`
+      : nothing;
     return this._renderRow(
       "screen",
       t("row_screen"),
       description,
-      this._renderSwitch("screen", status ? !status.screen_off : false, !status, busy, (on) =>
-        this._run(on ? "screen_on" : "screen_off", {}, { screen_off: !on }),
+      this._renderSwitch(
+        "screen",
+        status ? !status.screen_off : false,
+        !status || cannotTurnOff,
+        busy,
+        (on) => this._run(on ? "screen_on" : "screen_off", {}, { screen_off: !on }),
+        muted ? ["screen-note"] : [],
       ),
+      note,
     );
   }
 
@@ -907,6 +942,12 @@ export class SmartPanelCard extends LitElement {
       .slider-control {
         flex: 1 1 200px;
         max-width: 320px;
+      }
+
+      .row-note {
+        flex-basis: 100%;
+        margin-top: var(--ha-space-1);
+        font-size: var(--ha-font-size-s);
       }
 
       .card-actions {

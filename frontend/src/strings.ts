@@ -54,6 +54,8 @@ const STRINGS = {
     "Enter a full address that starts with http:// or https://.",
   error_password_required:
     "Enter the Wi-Fi password, or set security to None.",
+  error_https_required:
+    "Use an https:// address. http:// only works for a local address: a private IP address, localhost, or a .local or .home.arpa name.",
   error_too_long: "This is too long.",
   error_unknown: "This value is not valid.",
   error_other_field: "{field}: {message}",
@@ -138,6 +140,10 @@ const STRINGS = {
   waiting_report:
     "Waiting for the first status report. If none arrives, update the panel app, then select Refresh status.",
   row_screen: "Screen",
+  screen_off_disabled:
+    "Screen off is disabled until a Home Assistant bug is fixed. Turning the screen off can disconnect the panel until it restarts.",
+  screen_off_disabled_link: "Home Assistant issue #176371",
+  opens_new_tab: "(opens in a new tab)",
   row_brightness: "Brightness",
   row_auto_brightness: "Automatic brightness",
   row_auto_brightness_helper: "Uses the light sensor of the device.",

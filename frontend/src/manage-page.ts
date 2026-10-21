@@ -25,7 +25,13 @@ import {
   cardStyles,
   spinnerStyles,
 } from "./styles";
-import type { Candidate, HomeAssistant, Panel, UnsubscribeFunc } from "./types";
+import type {
+  Candidate,
+  HomeAssistant,
+  Panel,
+  ScreenOffDisabled,
+  UnsubscribeFunc,
+} from "./types";
 
 /** How often relative times like "Last seen 5 minutes ago" move on. */
 const CLOCK_INTERVAL_MS = 30_000;
@@ -38,6 +44,8 @@ export class SmartPanelManage extends LitElement {
   @property({ attribute: false }) accessor setupHref = "";
 
   @state() private accessor _panels: Panel[] | undefined;
+
+  @state() private accessor _screenOffDisabled: ScreenOffDisabled | null = null;
 
   @state() private accessor _subscribeError: string | undefined;
 
@@ -90,6 +98,7 @@ export class SmartPanelManage extends LitElement {
     this._subscribeError = undefined;
     const subscription = subscribePanels(this.hass, (message) => {
       this._panels = message.panels;
+      this._screenOffDisabled = message.screen_off_disabled;
       this._now = new Date();
     });
     this._unsubscribe = subscription;
@@ -168,6 +177,7 @@ export class SmartPanelManage extends LitElement {
             .hass=${this.hass}
             .panel=${panel}
             .now=${this._now}
+            .screenOffDisabled=${this._screenOffDisabled}
             @panel-removed=${this._onRemoved}
           ></smart-panel-card>
         </li>`,

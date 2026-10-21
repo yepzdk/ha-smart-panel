@@ -27,7 +27,7 @@
           "wifi_password": "Leave empty to keep the saved password. Not needed for an open network.",
           "wifi_security": "WPA covers WPA, WPA2 and WPA2/WPA3 mixed networks. WPA3-only networks cannot be used for provisioning. NONE is an open network.",
           "wifi_hidden": "Turn on when the network does not broadcast its name.",
-          "ha_url": "The address panels on your network use to reach Home Assistant, for example http://192.168.1.10:8123. Panels also report their status here."
+          "ha_url": "The address panels use to reach Home Assistant, for example http://192.168.1.10:8123. Panels also report their status here. Use https:// unless the address is on your local network."
         }
       }
     },
@@ -35,7 +35,8 @@
       "required": "Fill in this field.",
       "invalid_url": "Enter a full http:// or https:// address without a query, fragment or comma.",
       "password_required": "Enter the Wi-Fi password, or choose NONE for an open network.",
-      "too_long": "This value is too long."
+      "too_long": "This value is too long.",
+      "https_required": "Use an https:// address. http:// is only allowed for a local address: a private IP address, localhost, or a .local or .home.arpa name."
     }
   },
   "config_subentries": {
@@ -176,6 +177,9 @@
     },
     "factory_reset_not_confirmed": {
       "message": "Confirm the factory reset to erase the panel."
+    },
+    "screen_off_disabled": {
+      "message": "Screen off is disabled until Home Assistant issue 176371 is fixed: turning the screen off makes the panel stop receiving commands. See {url}"
     },
     "not_loaded": {
       "message": "Smart Panel is not loaded."

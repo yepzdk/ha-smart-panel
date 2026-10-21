@@ -1,6 +1,7 @@
 """Tests for the WebSocket API and the provisioning QR code."""
 
 from typing import Any
+from unittest.mock import patch
 
 import pytest
 from pytest_homeassistant_custom_component.common import MockConfigEntry
@@ -85,6 +86,15 @@ async def test_settings_never_include_password(
                 "ha_url": "http://a,b:8123",
             },
             {"wifi_password": "too_long", "ha_url": "invalid_url"},
+        ),
+        (
+            {
+                "wifi_ssid": "Home",
+                "wifi_security": "WPA",
+                "wifi_hidden": False,
+                "ha_url": "http://ha.example.com:8123",
+            },
+            {"ha_url": "https_required"},
         ),
     ],
 )
@@ -317,6 +327,9 @@ async def test_panels_subscription(
     assert response["success"]
 
     event = (await client.receive_json())["event"]
+    assert event["screen_off_disabled"] == {
+        "reason_url": "https://github.com/home-assistant/core/issues/176371"
+    }
     [panel] = event["panels"]
     assert panel["panel_id"] == next(iter(setup_integration.subentries))
     assert panel["name"] == "smart-panel-kitchen"
@@ -350,3 +363,17 @@ async def test_panels_subscription(
     expected_status = kitchen_report()
     del expected_status["ref"]
     assert panel["status"] == expected_status
+
+
+async def test_panels_subscription_screen_off_enabled(
+    hass: HomeAssistant,
+    hass_ws_client: WebSocketGenerator,
+    setup_integration: MockConfigEntry,
+) -> None:
+    """Without the mute the payload carries null."""
+    with patch("custom_components.smart_panel.commands.SCREEN_OFF_DISABLED", False):
+        client = await hass_ws_client(hass)
+        await client.send_json_auto_id({"type": "smart_panel/panels/subscribe"})
+        assert (await client.receive_json())["success"]
+        event = (await client.receive_json())["event"]
+    assert event["screen_off_disabled"] is None

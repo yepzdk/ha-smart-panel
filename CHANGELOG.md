@@ -7,9 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.0] - 2026-10-21
+
 ### Added
 
 - Smart Panels sidebar page: a Setup tab with the Wi-Fi settings, the provisioning QR code and an enrolment guide, and a Manage tab to send commands to each panel.
 - Panels as devices with entities for the screen, brightness, maintenance mode, reload, restart and app updates, plus `smart_panel.navigate` and `smart_panel.factory_reset` actions.
 - Live panel status (online, versions, screen, brightness, maintenance mode) reported by the panel app.
 - The QR code tells the panel which Wi-Fi network to keep, so a network joined earlier in the setup wizard is forgotten; the enrolment guide explains how to skip that Wi-Fi screen.
+- Panels away from home (vacation home, boat, office) can report their status from any network; the Home Assistant address must use `https://` unless it is a local address.
+- Turning a panel's screen off is disabled until [Home Assistant issue 176371](https://github.com/home-assistant/core/issues/176371) is fixed, because it makes the panel stop receiving commands; turning the screen on still works.
+
+[Unreleased]: https://github.com/yepzdk/ha-smart-panel/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/yepzdk/ha-smart-panel/releases/tag/v0.1.0

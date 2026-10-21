@@ -51,6 +51,13 @@ ONLINE_TIMEOUT: Final = timedelta(minutes=35)
 # How often a panel that is not online is sent LINK again.
 LINK_RETRY_INTERVAL: Final = timedelta(minutes=5)
 
+# Turning a panel's screen off strands it: the Companion app behind the black
+# overlay confirms the next push late, and Home Assistant then drops the
+# device's local push channel until the app restarts. Screen off stays muted
+# until that upstream bug is fixed; set SCREEN_OFF_DISABLED to False then.
+SCREEN_OFF_ISSUE_URL: Final = "https://github.com/home-assistant/core/issues/176371"
+SCREEN_OFF_DISABLED: Final = True
+
 # Sidebar panel.
 PANEL_URL_PATH: Final = "smart-panel"
 PANEL_COMPONENT_NAME: Final = "smart-panel-app"

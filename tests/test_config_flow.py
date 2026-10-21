@@ -78,6 +78,15 @@ async def test_only_one_entry(hass: HomeAssistant) -> None:
             },
             {"wifi_password": "too_long", "ha_url": "invalid_url"},
         ),
+        (
+            {
+                "wifi_ssid": "Home",
+                "wifi_security": "NONE",
+                "wifi_hidden": False,
+                "ha_url": "http://ha.example.com",
+            },
+            {"ha_url": "https_required"},
+        ),
     ],
 )
 async def test_options_flow_rejects_invalid_settings(

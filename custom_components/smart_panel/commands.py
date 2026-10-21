@@ -23,7 +23,14 @@ from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import HomeAssistantError, ServiceValidationError
 from homeassistant.helpers import device_registry as dr
 
-from .const import DOMAIN, DPC_PACKAGE, MOBILE_APP_DEVICE_ID, MOBILE_APP_DOMAIN
+from .const import (
+    DOMAIN,
+    DPC_PACKAGE,
+    MOBILE_APP_DEVICE_ID,
+    MOBILE_APP_DOMAIN,
+    SCREEN_OFF_DISABLED,
+    SCREEN_OFF_ISSUE_URL,
+)
 from .models import Panel
 
 _LOGGER = logging.getLogger(__name__)
@@ -204,6 +211,12 @@ async def async_run_command(
     Raises ServiceValidationError for invalid input and HomeAssistantError when
     the command could not be sent.
     """
+    if command == COMMAND_SCREEN_OFF and SCREEN_OFF_DISABLED:
+        raise ServiceValidationError(
+            translation_domain=DOMAIN,
+            translation_key="screen_off_disabled",
+            translation_placeholders={"url": SCREEN_OFF_ISSUE_URL},
+        )
     if action := _SIMPLE_COMMANDS.get(command):
         await async_send_action(hass, panel, action)
     elif command == COMMAND_BRIGHTNESS:
@@ -235,6 +248,11 @@ async def async_run_command(
             translation_key="unknown_command",
             translation_placeholders={"command": command},
         )
+
+
+def screen_off_disabled_payload() -> dict[str, str] | None:
+    """Return why screen off is disabled, as the frontend sees it, or None."""
+    return {"reason_url": SCREEN_OFF_ISSUE_URL} if SCREEN_OFF_DISABLED else None
 
 
 async def async_set_brightness(

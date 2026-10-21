@@ -10,7 +10,12 @@ from homeassistant.exceptions import HomeAssistantError, ServiceValidationError
 from homeassistant.helpers import device_registry as dr, entity_registry as er
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
 
-from .commands import COMMAND_REFRESH, async_link, async_run_command
+from .commands import (
+    COMMAND_REFRESH,
+    async_link,
+    async_run_command,
+    screen_off_disabled_payload,
+)
 from .const import (
     CONF_HA_URL,
     CONF_MOBILE_APP_ENTRY_ID,
@@ -125,8 +130,9 @@ async def ws_qr(
 @callback
 def _async_panels_payload(hass: HomeAssistant) -> dict[str, Any]:
     """Return every panel as the frontend sees it."""
+    screen_off_disabled = screen_off_disabled_payload()
     if (entry := async_get_loaded_entry(hass)) is None:
-        return {"panels": []}
+        return {"panels": [], "screen_off_disabled": screen_off_disabled}
     data = entry.runtime_data
     device_registry = dr.async_get(hass)
     entity_registry = er.async_get(hass)
@@ -154,7 +160,7 @@ def _async_panels_payload(hass: HomeAssistant) -> dict[str, Any]:
                 },
             }
         )
-    return {"panels": panels}
+    return {"panels": panels, "screen_off_disabled": screen_off_disabled}
 
 
 @websocket_api.require_admin

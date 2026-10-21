@@ -28,13 +28,19 @@ export const updateSettings = (
 export const fetchQrCode = (hass: HomeAssistant): Promise<QrCode> =>
   hass.callWS<QrCode>({ type: "smart_panel/qr" });
 
+/** The subscription event as sent; a backend without the mute leaves the key out. */
+type PanelsEvent = Omit<PanelsMessage, "screen_off_disabled"> &
+  Partial<Pick<PanelsMessage, "screen_off_disabled">>;
+
 export const subscribePanels = (
   hass: HomeAssistant,
   callback: (message: PanelsMessage) => void,
 ): Promise<UnsubscribeFunc> =>
-  hass.connection.subscribeMessage<PanelsMessage>(callback, {
-    type: "smart_panel/panels/subscribe",
-  });
+  hass.connection.subscribeMessage<PanelsEvent>(
+    (event) =>
+      callback({ ...event, screen_off_disabled: event.screen_off_disabled ?? null }),
+    { type: "smart_panel/panels/subscribe" },
+  );
 
 export const fetchCandidates = async (
   hass: HomeAssistant,
