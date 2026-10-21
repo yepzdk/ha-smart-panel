@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.1] - 2026-10-21
+
 ### Changed
 
 - While a panel is offline its screen, brightness, maintenance mode, automatic brightness, Home Assistant app version and panel app entities are unavailable; Connectivity, Last seen and the buttons stay available.
@@ -27,5 +29,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Panels away from home (vacation home, boat, office) can report their status from any network; the Home Assistant address must use `https://` unless it is a local address.
 - Turning a panel's screen off is disabled until [Home Assistant issue 176371](https://github.com/home-assistant/core/issues/176371) is fixed, because it makes the panel stop receiving commands; turning the screen on still works.
 
-[Unreleased]: https://github.com/yepzdk/ha-smart-panel/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/yepzdk/ha-smart-panel/compare/v0.1.1...HEAD
+[0.1.1]: https://github.com/yepzdk/ha-smart-panel/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/yepzdk/ha-smart-panel/releases/tag/v0.1.0
