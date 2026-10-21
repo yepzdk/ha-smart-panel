@@ -14,6 +14,7 @@ from .panels import (
     async_cancel_timers,
     async_create_panels,
     async_link_all,
+    async_start_link_retry,
     async_sync_panels,
     async_unlink_all,
 )
@@ -87,6 +88,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: SmartPanelConfigEntry) -
     entry.async_create_background_task(
         hass, async_link_all(hass, entry), "smart_panel link panels"
     )
+    async_start_link_retry(hass, entry)
     async_dispatcher_send(hass, SIGNAL_PANELS_CHANGED)
     return True
 

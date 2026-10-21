@@ -7,8 +7,9 @@ when two registrations share a device name only one of them has a target
 service and the other one fails instead of being mixed up.
 """
 
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
+import logging
 from typing import Any
 
 from homeassistant.components.device_automation import (
@@ -25,8 +26,17 @@ from homeassistant.helpers import device_registry as dr
 from .const import DOMAIN, DPC_PACKAGE, MOBILE_APP_DEVICE_ID, MOBILE_APP_DOMAIN
 from .models import Panel
 
+_LOGGER = logging.getLogger(__name__)
+
 NOTIFY_ACTION_TYPE = "notify"
 NOTIFY_MESSAGE = "command_broadcast_intent"
+
+# Companion app command that sets when its websocket stays connected. Panels
+# run the minimal app without cloud push, so the websocket is the only command
+# path; with the default setting it drops once the screen overlay hides the
+# app, and every later command fails.
+PERSISTENT_CONNECTION_MESSAGE = "command_persistent_connection"
+PERSISTENT_CONNECTION_DATA = {"persistent": "always"}
 
 # The device action renders its message and data as templates.
 _TEMPLATE_MARKERS = ("{{", "{%", "{#")
@@ -120,14 +130,20 @@ def encode_extras(extras: Sequence[Extra]) -> str:
 async def async_send_action(
     hass: HomeAssistant, panel: Panel, action: str, extras: Sequence[Extra] = ()
 ) -> None:
-    """Send one DPC action to a panel through its mobile_app registration."""
+    """Send one DPC action to a panel as a broadcast intent."""
     data = {
         "intent_package_name": DPC_PACKAGE,
         "intent_action": f"{DPC_PACKAGE}.{action}",
     }
     if extras:
         data["intent_extras"] = encode_extras(extras)
+    await _async_notify(hass, panel, NOTIFY_MESSAGE, data)
 
+
+async def _async_notify(
+    hass: HomeAssistant, panel: Panel, message: str, data: Mapping[str, str]
+) -> None:
+    """Send one notification command to the panel's mobile_app registration."""
     mobile_app_entry = hass.config_entries.async_get_entry(panel.mobile_app_entry_id)
     device = (
         dr.async_get(hass).async_get_device_by_identifier(
@@ -155,8 +171,8 @@ async def async_send_action(
                 CONF_DEVICE_ID: device.id,
                 CONF_DOMAIN: MOBILE_APP_DOMAIN,
                 CONF_TYPE: NOTIFY_ACTION_TYPE,
-                "message": NOTIFY_MESSAGE,
-                "data": data,
+                "message": message,
+                "data": dict(data),
             }
         )
         await platform.async_call_action_from_config(hass, config, {}, None)
@@ -252,13 +268,28 @@ async def async_navigate(hass: HomeAssistant, panel: Panel, path: str | None) ->
 
 
 async def async_link(hass: HomeAssistant, panel: Panel, status_url: str) -> None:
-    """Tell the panel its ref and where to report."""
+    """Tell the panel its ref and where to report.
+
+    After a successful LINK the Companion app is also told to keep its
+    websocket connected at all times. A failure there is only logged: the
+    panel is linked, and the next LINK tries again.
+    """
     await async_send_action(
         hass,
         panel,
         ACTION_LINK,
         [Extra("ref", panel.ref), Extra("url", status_url)],
     )
+    try:
+        await _async_notify(
+            hass, panel, PERSISTENT_CONNECTION_MESSAGE, PERSISTENT_CONNECTION_DATA
+        )
+    except HomeAssistantError as err:
+        _LOGGER.warning(
+            "Could not keep the Home Assistant app connection of %s open: %s",
+            panel.title,
+            err,
+        )
 
 
 async def async_unlink(hass: HomeAssistant, panel: Panel) -> None:

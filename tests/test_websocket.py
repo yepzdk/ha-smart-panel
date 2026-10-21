@@ -12,7 +12,14 @@ from pytest_homeassistant_custom_component.typing import (
 from custom_components.smart_panel.qr import provisioning_payload
 from homeassistant.core import HomeAssistant
 
-from .conftest import HA_URL, KITCHEN_REF, WEBHOOK_ID, PushRecorder, kitchen_report
+from .conftest import (
+    HA_URL,
+    KEEP_CONNECTED,
+    KITCHEN_REF,
+    WEBHOOK_ID,
+    PushRecorder,
+    kitchen_report,
+)
 
 EXTRA = "android.app.extra."
 
@@ -127,9 +134,10 @@ async def test_settings_update_saves_and_keeps_password(
     assert setup_integration.options["wifi_password"] == "secret-password"
 
     await hass.async_block_till_done()
-    assert [push.data["intent_extras"] for push in pushes] == [
+    assert [push.command for push in pushes] == ["LINK", KEEP_CONNECTED]
+    assert pushes[0].data["intent_extras"] == (
         f"ref:{KITCHEN_REF}:String,url:https://ha.example/api/webhook/{WEBHOOK_ID}:String"
-    ]
+    )
 
 
 async def test_qr_not_ready_lists_missing_settings(
@@ -251,8 +259,10 @@ async def test_add_and_remove_panel(
 
     assert panel_id in setup_integration.subentries
     assert hass.states.get("switch.smart_panel_hall_screen") is not None
-    assert len(pushes) == 1
-    assert pushes[0].token == "token-hall-0002"
+    assert [(push.token, push.command) for push in pushes] == [
+        ("token-hall-0002", "LINK"),
+        ("token-hall-0002", KEEP_CONNECTED),
+    ]
     assert pushes[0].data == {
         "intent_package_name": "dk.yepzdk.hapanel",
         "intent_action": "dk.yepzdk.hapanel.LINK",

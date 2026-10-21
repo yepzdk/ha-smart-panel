@@ -48,6 +48,8 @@ HA_APK_URL: Final = "https://github.com/home-assistant/android/releases/latest/d
 
 LATEST_RELEASE_INTERVAL: Final = timedelta(hours=6)
 ONLINE_TIMEOUT: Final = timedelta(minutes=35)
+# How often a panel that is not online is sent LINK again.
+LINK_RETRY_INTERVAL: Final = timedelta(minutes=5)
 
 # Sidebar panel.
 PANEL_URL_PATH: Final = "smart-panel"

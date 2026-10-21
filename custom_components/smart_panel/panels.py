@@ -15,7 +15,7 @@ from homeassistant.core import HomeAssistant, callback
 from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers.dispatcher import async_dispatcher_send
-from homeassistant.helpers.event import async_call_later
+from homeassistant.helpers.event import async_call_later, async_track_time_interval
 from homeassistant.util import dt as dt_util
 
 from .commands import async_link, async_unlink
@@ -25,6 +25,7 @@ from .const import (
     CONF_REF,
     CONF_WEBHOOK_ID,
     DOMAIN,
+    LINK_RETRY_INTERVAL,
     MINIMAL_APP_VERSION_SUFFIX,
     MOBILE_APP_APP_VERSION,
     MOBILE_APP_DEVICE_ID,
@@ -292,6 +293,42 @@ async def async_link_all(hass: HomeAssistant, entry: SmartPanelConfigEntry) -> N
         *(
             _async_link(hass, entry, panel, logging.DEBUG)
             for panel in entry.runtime_data.panels.values()
+        )
+    )
+
+
+@callback
+def async_start_link_retry(hass: HomeAssistant, entry: SmartPanelConfigEntry) -> None:
+    """Send LINK again every few minutes to each panel that is not online.
+
+    A LINK fails while the panel's app is not connected, for example right
+    after a restart or right after the panel was added; without a retry such
+    a panel would stay unlinked. One retry per panel at a time; the timer and
+    running retries stop when the entry unloads.
+    """
+
+    async def _async_retry(panel: Panel) -> None:
+        try:
+            await _async_link(hass, entry, panel, logging.DEBUG)
+        finally:
+            panel.link_retry_in_flight = False
+
+    @callback
+    def _async_retry_offline(_now: Any) -> None:
+        for panel in entry.runtime_data.panels.values():
+            if panel.online or panel.link_retry_in_flight:
+                continue
+            panel.link_retry_in_flight = True
+            entry.async_create_background_task(
+                hass, _async_retry(panel), f"smart_panel link retry {panel.ref}"
+            )
+
+    entry.async_on_unload(
+        async_track_time_interval(
+            hass,
+            _async_retry_offline,
+            LINK_RETRY_INTERVAL,
+            cancel_on_shutdown=True,
         )
     )
 

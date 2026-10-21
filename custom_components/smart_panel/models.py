@@ -29,6 +29,8 @@ class Panel:
     status: dict[str, Any] | None = None
     last_seen: datetime | None = None
     cancel_offline_timer: CALLBACK_TYPE | None = field(default=None, repr=False)
+    # A LINK retry is on its way; the next retry skips the panel until it ends.
+    link_retry_in_flight: bool = field(default=False, repr=False)
 
     @classmethod
     def from_subentry(cls, subentry: ConfigSubentry) -> Panel:

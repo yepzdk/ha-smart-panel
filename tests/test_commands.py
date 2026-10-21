@@ -12,7 +12,14 @@ from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ServiceValidationError
 from homeassistant.helpers import device_registry as dr
 
-from .conftest import HA_URL, KITCHEN_REF, WEBHOOK_ID, PushRecorder, mobile_app_data
+from .conftest import (
+    HA_URL,
+    KEEP_CONNECTED,
+    KITCHEN_REF,
+    WEBHOOK_ID,
+    PushRecorder,
+    mobile_app_data,
+)
 
 
 def test_encode_extras_types_every_string_value() -> None:
@@ -111,11 +118,15 @@ async def test_command_push(
     }
     if extras is not None:
         expected_data["intent_extras"] = extras
-    [push] = pushes
+    push, *follow_up = pushes
     assert push.token == f"token-{KITCHEN_REF}"
     assert push.webhook_id == f"webhook-{KITCHEN_REF}"
     assert push.message == "command_broadcast_intent"
     assert push.data == expected_data
+    # Only LINK is followed by the keep-connected command.
+    assert [(p.token, p.command) for p in follow_up] == (
+        [(f"token-{KITCHEN_REF}", KEEP_CONNECTED)] if action == "LINK" else []
+    )
 
 
 @pytest.mark.parametrize(

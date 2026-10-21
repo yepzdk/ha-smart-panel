@@ -21,6 +21,8 @@ pytest_plugins = "pytest_homeassistant_custom_component"
 WEBHOOK_ID = "a" * 64
 HA_URL = "http://192.168.1.10:8123"
 KITCHEN_REF = "kitchen-0001"
+# Sent after every successful LINK so the app keeps its websocket connected.
+KEEP_CONNECTED = "command_persistent_connection"
 # The Companion app's push relay; every registration uses it with its own token.
 PUSH_URL = "https://mobile-apps.home-assistant.io/api/sendPushNotification"
 
@@ -96,6 +98,13 @@ class Push:
     webhook_id: str
     message: str
     data: dict[str, Any]
+
+    @property
+    def command(self) -> str:
+        """Return the DPC action of a broadcast intent, else the message."""
+        if self.message == "command_broadcast_intent":
+            return self.data["intent_action"].removeprefix("dk.yepzdk.hapanel.")
+        return self.message
 
 
 class PushRecorder:

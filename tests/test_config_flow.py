@@ -11,7 +11,7 @@ from homeassistant import config_entries
 from homeassistant.core import HomeAssistant
 from homeassistant.data_entry_flow import FlowResultType
 
-from .conftest import HA_URL, KITCHEN_REF, WEBHOOK_ID, PushRecorder
+from .conftest import HA_URL, KEEP_CONNECTED, KITCHEN_REF, WEBHOOK_ID, PushRecorder
 
 
 async def test_user_flow_creates_entry_with_defaults(hass: HomeAssistant) -> None:
@@ -222,8 +222,10 @@ async def test_panel_subentry_flow_lists_unadded_registrations(
         "mobile_app_entry_id": mobile_app_entries["hall"].entry_id,
     }
     # The new panel is linked and gets its entities.
-    assert [push.data["intent_action"] for push in pushes] == ["dk.yepzdk.hapanel.LINK"]
-    assert pushes[0].token == "token-hall-0002"
+    assert [(push.token, push.command) for push in pushes] == [
+        ("token-hall-0002", "LINK"),
+        ("token-hall-0002", KEEP_CONNECTED),
+    ]
     assert hass.states.get("switch.smart_panel_hall_screen") is not None
 
 
