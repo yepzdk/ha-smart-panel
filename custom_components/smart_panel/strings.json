@@ -150,8 +150,14 @@
     "invalid_extra_value": {
       "message": "The value for {name} cannot contain a comma."
     },
+    "template_in_extra_value": {
+      "message": "The value for {name} cannot contain template syntax."
+    },
     "panel_not_registered": {
       "message": "The Home Assistant app registration of {panel} is not loaded."
+    },
+    "panel_not_reachable": {
+      "message": "Could not send the command to {panel}: Home Assistant has no notification target for its app registration ({error}). Either the registration is not connected for push notifications, or another app registration has the same device name; give each device a unique name in the Companion app."
     },
     "send_failed": {
       "message": "Could not send the command to {panel}: {error}"

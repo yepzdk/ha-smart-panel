@@ -1,18 +1,35 @@
-"""Commands to panels, sent as broadcast intents through the Companion app."""
+"""Commands to panels, sent as broadcast intents through the Companion app.
+
+A command goes through mobile_app's `notify` device action, the same path an
+automation uses. That action finds the notify target service of exactly this
+registration by its webhook id, so it never reaches another registration;
+when two registrations share a device name only one of them has a target
+service and the other one fails instead of being mixed up.
+"""
 
 from collections.abc import Sequence
 from dataclasses import dataclass
+from typing import Any
 
+from homeassistant.components.device_automation import (
+    DeviceAutomationType,
+    InvalidDeviceAutomationConfig,
+    async_get_device_automation_platform,
+)
 from homeassistant.config_entries import ConfigEntryState
+from homeassistant.const import CONF_DEVICE_ID, CONF_DOMAIN, CONF_TYPE
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import HomeAssistantError, ServiceValidationError
+from homeassistant.helpers import device_registry as dr
 
-from .const import DOMAIN, DPC_PACKAGE, MOBILE_APP_DOMAIN, MOBILE_APP_WEBHOOK_ID
+from .const import DOMAIN, DPC_PACKAGE, MOBILE_APP_DEVICE_ID, MOBILE_APP_DOMAIN
 from .models import Panel
 
-NOTIFY_DOMAIN = "notify"
-NOTIFY_SERVICE = MOBILE_APP_DOMAIN
+NOTIFY_ACTION_TYPE = "notify"
 NOTIFY_MESSAGE = "command_broadcast_intent"
+
+# The device action renders its message and data as templates.
+_TEMPLATE_MARKERS = ("{{", "{%", "{#")
 
 # DPC broadcast actions.
 ACTION_SCREEN_OFF = "SCREEN_OFF"
@@ -73,13 +90,23 @@ class Extra:
 
 
 def encode_extras(extras: Sequence[Extra]) -> str:
-    """Encode extras in the Companion app `intent_extras` format."""
+    """Encode extras in the Companion app `intent_extras` format.
+
+    A comma would start another extra, and template syntax would be rendered
+    by the device action, so values containing either are refused.
+    """
     parts: list[str] = []
     for extra in extras:
         if "," in extra.value:
             raise ServiceValidationError(
                 translation_domain=DOMAIN,
                 translation_key="invalid_extra_value",
+                translation_placeholders={"name": extra.name},
+            )
+        if any(marker in extra.value for marker in _TEMPLATE_MARKERS):
+            raise ServiceValidationError(
+                translation_domain=DOMAIN,
+                translation_key="template_in_extra_value",
                 translation_placeholders={"name": extra.name},
             )
         parts.append(
@@ -102,11 +129,17 @@ async def async_send_action(
         data["intent_extras"] = encode_extras(extras)
 
     mobile_app_entry = hass.config_entries.async_get_entry(panel.mobile_app_entry_id)
-    if (
-        mobile_app_entry is None
-        or mobile_app_entry.domain != MOBILE_APP_DOMAIN
-        or mobile_app_entry.state is not ConfigEntryState.LOADED
-    ):
+    device = (
+        dr.async_get(hass).async_get_device_by_identifier(
+            (MOBILE_APP_DOMAIN, mobile_app_entry.data[MOBILE_APP_DEVICE_ID]),
+            mobile_app_entry.entry_id,
+        )
+        if mobile_app_entry is not None
+        and mobile_app_entry.domain == MOBILE_APP_DOMAIN
+        and mobile_app_entry.state is ConfigEntryState.LOADED
+        else None
+    )
+    if device is None:
         raise HomeAssistantError(
             translation_domain=DOMAIN,
             translation_key="panel_not_registered",
@@ -114,16 +147,25 @@ async def async_send_action(
         )
 
     try:
-        await hass.services.async_call(
-            NOTIFY_DOMAIN,
-            NOTIFY_SERVICE,
-            {
-                "message": NOTIFY_MESSAGE,
-                "target": [mobile_app_entry.data[MOBILE_APP_WEBHOOK_ID]],
-                "data": data,
-            },
-            blocking=True,
+        platform = await async_get_device_automation_platform(
+            hass, MOBILE_APP_DOMAIN, DeviceAutomationType.ACTION
         )
+        config: dict[str, Any] = platform.ACTION_SCHEMA(
+            {
+                CONF_DEVICE_ID: device.id,
+                CONF_DOMAIN: MOBILE_APP_DOMAIN,
+                CONF_TYPE: NOTIFY_ACTION_TYPE,
+                "message": NOTIFY_MESSAGE,
+                "data": data,
+            }
+        )
+        await platform.async_call_action_from_config(hass, config, {}, None)
+    except InvalidDeviceAutomationConfig as err:
+        raise HomeAssistantError(
+            translation_domain=DOMAIN,
+            translation_key="panel_not_reachable",
+            translation_placeholders={"panel": panel.title, "error": str(err)},
+        ) from err
     except HomeAssistantError as err:
         raise HomeAssistantError(
             translation_domain=DOMAIN,

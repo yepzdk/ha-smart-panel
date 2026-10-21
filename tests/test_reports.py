@@ -14,10 +14,10 @@ from pytest_homeassistant_custom_component.typing import ClientSessionGenerator
 
 from custom_components.smart_panel.const import DOMAIN
 from homeassistant.const import STATE_OFF, STATE_ON, STATE_UNAVAILABLE, STATE_UNKNOWN
-from homeassistant.core import HomeAssistant, ServiceCall
+from homeassistant.core import HomeAssistant
 from homeassistant.helpers import device_registry as dr
 
-from .conftest import KITCHEN_REF, WEBHOOK_ID, kitchen_report
+from .conftest import KITCHEN_REF, WEBHOOK_ID, PushRecorder, kitchen_report
 
 SCREEN = "switch.smart_panel_kitchen_screen"
 MAINTENANCE = "switch.smart_panel_kitchen_maintenance_mode"
@@ -125,17 +125,17 @@ async def test_auto_brightness_off_keeps_current_value(
     hass: HomeAssistant,
     hass_client_no_auth: ClientSessionGenerator,
     setup_integration: MockConfigEntry,
-    notify_calls: list[ServiceCall],
+    pushes: PushRecorder,
 ) -> None:
     """Turning automatic brightness off sets the reported value manually."""
     await _post(
         hass, hass_client_no_auth, kitchen_report(brightness=90, brightness_auto=True)
     )
-    notify_calls.clear()
+    pushes.clear()
     await hass.services.async_call(
         "switch", "turn_off", {"entity_id": AUTO_BRIGHTNESS}, blocking=True
     )
-    assert notify_calls[0].data["data"]["intent_extras"] == "brightness:90"
+    assert pushes[0].data["intent_extras"] == "brightness:90"
 
 
 async def test_panel_goes_offline_after_35_minutes(
@@ -236,7 +236,7 @@ async def test_entity_actions_send_commands(
     hass: HomeAssistant,
     hass_client_no_auth: ClientSessionGenerator,
     setup_integration: MockConfigEntry,
-    notify_calls: list[ServiceCall],
+    pushes: PushRecorder,
     domain: str,
     service: str,
     entity_id: str,
@@ -246,12 +246,12 @@ async def test_entity_actions_send_commands(
 ) -> None:
     """Each entity action sends its command to the panel."""
     await _post(hass, hass_client_no_auth, kitchen_report())
-    notify_calls.clear()
+    pushes.clear()
 
     await hass.services.async_call(
         domain, service, {"entity_id": entity_id, **data}, blocking=True
     )
-    [call] = notify_calls
-    assert call.data["target"] == [f"webhook-{KITCHEN_REF}"]
-    assert call.data["data"]["intent_action"] == f"dk.yepzdk.hapanel.{action}"
-    assert call.data["data"].get("intent_extras") == extras
+    [push] = pushes
+    assert push.token == f"token-{KITCHEN_REF}"
+    assert push.data["intent_action"] == f"dk.yepzdk.hapanel.{action}"
+    assert push.data.get("intent_extras") == extras

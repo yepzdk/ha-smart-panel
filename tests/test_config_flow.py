@@ -8,10 +8,10 @@ from pytest_homeassistant_custom_component.common import MockConfigEntry
 
 from custom_components.smart_panel.const import DOMAIN
 from homeassistant import config_entries
-from homeassistant.core import HomeAssistant, ServiceCall
+from homeassistant.core import HomeAssistant
 from homeassistant.data_entry_flow import FlowResultType
 
-from .conftest import HA_URL, KITCHEN_REF, WEBHOOK_ID
+from .conftest import HA_URL, KITCHEN_REF, WEBHOOK_ID, PushRecorder
 
 
 async def test_user_flow_creates_entry_with_defaults(hass: HomeAssistant) -> None:
@@ -185,7 +185,7 @@ async def test_panel_subentry_flow_lists_unadded_registrations(
     hass: HomeAssistant,
     setup_integration: MockConfigEntry,
     mobile_app_entries: dict[str, MockConfigEntry],
-    notify_calls: list[ServiceCall],
+    pushes: PushRecorder,
 ) -> None:
     """Minimal-app registrations come first and are marked; added ones are left out."""
     entry = setup_integration
@@ -206,7 +206,7 @@ async def test_panel_subentry_flow_lists_unadded_registrations(
     )
     assert options[1]["label"] == "Anna's phone (Pixel 9, 2026.8.4-full)"
 
-    notify_calls.clear()
+    pushes.clear()
     result = await hass.config_entries.subentries.async_configure(
         result["flow_id"], {"mobile_app_entry_id": mobile_app_entries["hall"].entry_id}
     )
@@ -222,10 +222,8 @@ async def test_panel_subentry_flow_lists_unadded_registrations(
         "mobile_app_entry_id": mobile_app_entries["hall"].entry_id,
     }
     # The new panel is linked and gets its entities.
-    assert [call.data["data"]["intent_action"] for call in notify_calls] == [
-        "dk.yepzdk.hapanel.LINK"
-    ]
-    assert notify_calls[0].data["target"] == ["webhook-hall-0002"]
+    assert [push.data["intent_action"] for push in pushes] == ["dk.yepzdk.hapanel.LINK"]
+    assert pushes[0].token == "token-hall-0002"
     assert hass.states.get("switch.smart_panel_hall_screen") is not None
 
 

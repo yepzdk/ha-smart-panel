@@ -10,9 +10,9 @@ from pytest_homeassistant_custom_component.typing import (
 )
 
 from custom_components.smart_panel.qr import provisioning_payload
-from homeassistant.core import HomeAssistant, ServiceCall
+from homeassistant.core import HomeAssistant
 
-from .conftest import HA_URL, KITCHEN_REF, WEBHOOK_ID, kitchen_report
+from .conftest import HA_URL, KITCHEN_REF, WEBHOOK_ID, PushRecorder, kitchen_report
 
 EXTRA = "android.app.extra."
 
@@ -101,10 +101,10 @@ async def test_settings_update_saves_and_keeps_password(
     hass: HomeAssistant,
     hass_ws_client: WebSocketGenerator,
     setup_integration: MockConfigEntry,
-    notify_calls: list[ServiceCall],
+    pushes: PushRecorder,
 ) -> None:
     """An omitted password keeps the saved one; a new URL relinks the panels."""
-    notify_calls.clear()
+    pushes.clear()
     response = await _call(
         hass,
         hass_ws_client,
@@ -127,7 +127,7 @@ async def test_settings_update_saves_and_keeps_password(
     assert setup_integration.options["wifi_password"] == "secret-password"
 
     await hass.async_block_till_done()
-    assert [call.data["data"]["intent_extras"] for call in notify_calls] == [
+    assert [push.data["intent_extras"] for push in pushes] == [
         f"ref:{KITCHEN_REF}:String,url:https://ha.example/api/webhook/{WEBHOOK_ID}:String"
     ]
 
@@ -233,11 +233,11 @@ async def test_add_and_remove_panel(
     hass_ws_client: WebSocketGenerator,
     setup_integration: MockConfigEntry,
     mobile_app_entries: dict[str, MockConfigEntry],
-    notify_calls: list[ServiceCall],
+    pushes: PushRecorder,
 ) -> None:
     """Adding links the panel and creates its entities; removing unlinks it."""
     client = await hass_ws_client(hass)
-    notify_calls.clear()
+    pushes.clear()
 
     await client.send_json_auto_id(
         {
@@ -251,9 +251,9 @@ async def test_add_and_remove_panel(
 
     assert panel_id in setup_integration.subentries
     assert hass.states.get("switch.smart_panel_hall_screen") is not None
-    assert len(notify_calls) == 1
-    assert notify_calls[0].data["target"] == ["webhook-hall-0002"]
-    assert notify_calls[0].data["data"] == {
+    assert len(pushes) == 1
+    assert pushes[0].token == "token-hall-0002"
+    assert pushes[0].data == {
         "intent_package_name": "dk.yepzdk.hapanel",
         "intent_action": "dk.yepzdk.hapanel.LINK",
         "intent_extras": (
@@ -271,7 +271,7 @@ async def test_add_and_remove_panel(
     response = await client.receive_json()
     assert response["error"]["code"] == "not_found"
 
-    notify_calls.clear()
+    pushes.clear()
     await client.send_json_auto_id(
         {"type": "smart_panel/panels/remove", "panel_id": panel_id}
     )
@@ -281,10 +281,10 @@ async def test_add_and_remove_panel(
 
     assert panel_id not in setup_integration.subentries
     assert hass.states.get("switch.smart_panel_hall_screen") is None
-    assert [call.data["data"]["intent_action"] for call in notify_calls] == [
+    assert [push.data["intent_action"] for push in pushes] == [
         "dk.yepzdk.hapanel.UNLINK"
     ]
-    assert notify_calls[0].data["target"] == ["webhook-hall-0002"]
+    assert pushes[0].token == "token-hall-0002"
 
     await client.send_json_auto_id(
         {"type": "smart_panel/panels/remove", "panel_id": panel_id}

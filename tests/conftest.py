@@ -1,19 +1,18 @@
 """Fixtures for Smart Panel tests."""
 
+from collections.abc import Iterator
+from dataclasses import dataclass
 from typing import Any
 
 import pytest
-from pytest_homeassistant_custom_component.common import (
-    MockConfigEntry,
-    async_mock_service,
-)
+from pytest_homeassistant_custom_component.common import MockConfigEntry
 from pytest_homeassistant_custom_component.test_util.aiohttp import (
     AiohttpClientMocker,
 )
 
 from custom_components.smart_panel.const import DOMAIN, DPC_LATEST_RELEASE_API
 from homeassistant.config_entries import ConfigSubentryData
-from homeassistant.core import HomeAssistant, ServiceCall
+from homeassistant.core import HomeAssistant
 from homeassistant.core_config import async_process_ha_core_config
 from homeassistant.setup import async_setup_component
 
@@ -22,13 +21,16 @@ pytest_plugins = "pytest_homeassistant_custom_component"
 WEBHOOK_ID = "a" * 64
 HA_URL = "http://192.168.1.10:8123"
 KITCHEN_REF = "kitchen-0001"
+# The Companion app's push relay; every registration uses it with its own token.
+PUSH_URL = "https://mobile-apps.home-assistant.io/api/sendPushNotification"
 
 
-def _mobile_app_data(
+def mobile_app_data(
     device_id: str, device_name: str, app_version: str, model: str
 ) -> dict[str, Any]:
+    """Return the data of a mobile_app registration that supports push."""
     return {
-        "app_data": {},
+        "app_data": {"push_token": f"token-{device_id}", "push_url": PUSH_URL},
         "app_id": "io.homeassistant.companion.android",
         "app_name": "Home Assistant",
         "app_version": app_version,
@@ -62,21 +64,21 @@ def mobile_app_entries(hass: HomeAssistant) -> dict[str, MockConfigEntry]:
         "kitchen": MockConfigEntry(
             domain="mobile_app",
             title="smart-panel-kitchen",
-            data=_mobile_app_data(
+            data=mobile_app_data(
                 KITCHEN_REF, "smart-panel-kitchen", "2026.8.4-minimal", "AC2003"
             ),
         ),
         "phone": MockConfigEntry(
             domain="mobile_app",
             title="Anna's phone",
-            data=_mobile_app_data(
+            data=mobile_app_data(
                 "phone:42.x", "Anna's phone", "2026.8.4-full", "Pixel 9"
             ),
         ),
         "hall": MockConfigEntry(
             domain="mobile_app",
             title="smart-panel-hall",
-            data=_mobile_app_data(
+            data=mobile_app_data(
                 "hall-0002", "smart-panel-hall", "2026.8.4-minimal", "AC2003"
             ),
         ),
@@ -86,14 +88,66 @@ def mobile_app_entries(hass: HomeAssistant) -> dict[str, MockConfigEntry]:
     return entries
 
 
+@dataclass(frozen=True)
+class Push:
+    """A notification mobile_app posted to the push relay."""
+
+    token: str
+    webhook_id: str
+    message: str
+    data: dict[str, Any]
+
+
+class PushRecorder:
+    """The notifications posted to the push relay since the last clear."""
+
+    def __init__(self, mocker: AiohttpClientMocker) -> None:
+        """Initialize the recorder."""
+        self._mocker = mocker
+        self._start = 0
+
+    def clear(self) -> None:
+        """Forget the notifications sent so far."""
+        self._start = len(self._mocker.mock_calls)
+
+    @property
+    def sent(self) -> list[Push]:
+        """Return the notifications sent since the last clear."""
+        return [
+            Push(
+                token=body["push_token"],
+                webhook_id=body["registration_info"]["webhook_id"],
+                message=body["message"],
+                data=body["data"],
+            )
+            for method, url, body, _headers in self._mocker.mock_calls[self._start :]
+            if method == "POST" and str(url) == PUSH_URL
+        ]
+
+    def __iter__(self) -> Iterator[Push]:
+        """Iterate over the notifications sent."""
+        return iter(self.sent)
+
+    def __len__(self) -> int:
+        """Return how many notifications were sent."""
+        return len(self.sent)
+
+    def __getitem__(self, index: int) -> Push:
+        """Return one notification."""
+        return self.sent[index]
+
+
 @pytest.fixture
-async def notify_calls(
-    hass: HomeAssistant, mobile_app_entries: dict[str, MockConfigEntry]
-) -> list[ServiceCall]:
-    """Set up mobile_app and replace its notify base service with a recorder."""
+async def pushes(
+    hass: HomeAssistant,
+    mobile_app_entries: dict[str, MockConfigEntry],
+    aioclient_mock: AiohttpClientMocker,
+) -> PushRecorder:
+    """Set up mobile_app with its real notify services; record what it pushes."""
+    aioclient_mock.post(PUSH_URL, json={}, status=201)
     assert await async_setup_component(hass, "mobile_app", {})
     await hass.async_block_till_done()
-    return async_mock_service(hass, "notify", "mobile_app")
+    return PushRecorder(aioclient_mock)
 
 
 @pytest.fixture
@@ -153,7 +207,7 @@ def config_entry(
 async def setup_integration(
     hass: HomeAssistant,
     config_entry: MockConfigEntry,
-    notify_calls: list[ServiceCall],
+    pushes: PushRecorder,
     mock_github: AiohttpClientMocker,
 ) -> MockConfigEntry:
     """Set up the integration with the kitchen panel."""
