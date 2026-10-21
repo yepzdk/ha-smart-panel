@@ -1,7 +1,8 @@
 import { mdiClose } from "@mdi/js";
 import { css, html, LitElement, nothing } from "lit";
 import type { PropertyValues } from "lit";
-import { customElement, property, query } from "lit/decorators.js";
+import { property, query } from "lit/decorators.js";
+import { defineOnce } from "./define";
 import { icon } from "./icon";
 import { t } from "./strings";
 import { baseStyles, buttonStyles } from "./styles";
@@ -26,7 +27,7 @@ const deepActiveElement = (): HTMLElement | null => {
  * The element with `data-autofocus` in the content gets focus when it opens; focus
  * goes back to where it was when it closes.
  */
-@customElement("smart-panel-dialog")
+@defineOnce("smart-panel-dialog")
 export class SmartPanelDialog extends LitElement {
   @property({ type: Boolean }) accessor open = false;
 

@@ -4,7 +4,8 @@
 import { mdiMenu, mdiQrcode, mdiTabletDashboard } from "@mdi/js";
 import { css, html, LitElement, nothing } from "lit";
 import type { PropertyValues, TemplateResult } from "lit";
-import { customElement, property } from "lit/decorators.js";
+import { property } from "lit/decorators.js";
+import { defineOnce } from "./define";
 import { icon } from "./icon";
 import "./manage-page";
 import { handleLinkClick } from "./navigation";
@@ -21,7 +22,7 @@ const TABS: readonly { page: Page; label: StringKey; icon: string }[] = [
   { page: "manage", label: "tab_manage", icon: mdiTabletDashboard },
 ];
 
-@customElement("smart-panel-app")
+@defineOnce("smart-panel-app")
 export class SmartPanelApp extends LitElement {
   @property({ attribute: false }) accessor hass!: HomeAssistant;
 

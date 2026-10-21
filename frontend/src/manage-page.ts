@@ -5,7 +5,8 @@ import {
 } from "@mdi/js";
 import { css, html, LitElement, nothing } from "lit";
 import type { PropertyValues, TemplateResult } from "lit";
-import { customElement, property, state } from "lit/decorators.js";
+import { property, state } from "lit/decorators.js";
+import { defineOnce } from "./define";
 import "./dialog";
 import "./panel-card";
 import {
@@ -29,7 +30,7 @@ import type { Candidate, HomeAssistant, Panel, UnsubscribeFunc } from "./types";
 /** How often relative times like "Last seen 5 minutes ago" move on. */
 const CLOCK_INTERVAL_MS = 30_000;
 
-@customElement("smart-panel-manage")
+@defineOnce("smart-panel-manage")
 export class SmartPanelManage extends LitElement {
   @property({ attribute: false }) accessor hass!: HomeAssistant;
 

@@ -7,7 +7,8 @@ import {
 } from "@mdi/js";
 import { css, html, LitElement, nothing } from "lit";
 import type { PropertyValues, TemplateResult } from "lit";
-import { customElement, property, state } from "lit/decorators.js";
+import { property, state } from "lit/decorators.js";
+import { defineOnce } from "./define";
 import "./dialog";
 import { errorMessage, removePanel, sendCommand } from "./data";
 import { dateTimeFormat, formatRelativeTime, percentFormat } from "./format";
@@ -57,7 +58,7 @@ const JUST_NOW_MS = 45_000;
 /** Paths for NAVIGATE: no spaces, and no commas, which split intent extras. */
 const PATH_PATTERN = /^\/[^\s,]*$/;
 
-@customElement("smart-panel-card")
+@defineOnce("smart-panel-card")
 export class SmartPanelCard extends LitElement {
   @property({ attribute: false }) accessor hass!: HomeAssistant;
 

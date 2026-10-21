@@ -12,7 +12,8 @@ import {
 } from "@mdi/js";
 import { css, html, LitElement, nothing } from "lit";
 import type { PropertyValues, TemplateResult } from "lit";
-import { customElement, property, state } from "lit/decorators.js";
+import { property, state } from "lit/decorators.js";
+import { defineOnce } from "./define";
 import { errorMessage, fetchQrCode, fetchSettings, updateSettings } from "./data";
 import { listFormat } from "./format";
 import { icon } from "./icon";
@@ -88,7 +89,7 @@ const withLink = (
   return html`${before}${link}${after}`;
 };
 
-@customElement("smart-panel-setup")
+@defineOnce("smart-panel-setup")
 export class SmartPanelSetup extends LitElement {
   @property({ attribute: false }) accessor hass!: HomeAssistant;
 
