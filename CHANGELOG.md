@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- While a panel is offline its screen, brightness, maintenance mode, automatic brightness, Home Assistant app version and panel app entities are unavailable; Connectivity, Last seen and the buttons stay available.
+- The Offline badge on the Manage tab shows the time of the panel's last report on hover.
+
+### Fixed
+
+- Panels no longer show as offline after a Home Assistant restart; the last status report and its time are kept.
+
 ## [0.1.0] - 2026-10-21
 
 ### Added

@@ -135,6 +135,7 @@ const STRINGS = {
   offline: "Offline",
   last_seen: "Last seen {time}",
   last_seen_now: "Last seen just now",
+  last_report_at: "Last report {time}",
   never_seen: "No status report yet",
   device_details: "{manufacturer} {model}, Android {version}",
   waiting_report:

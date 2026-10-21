@@ -146,7 +146,14 @@ export class SmartPanelCard extends LitElement {
                 : nothing}
             </p>
           </div>
-          <span class="badge ${panel.online ? "online" : "offline"}">
+          <span
+            class="badge ${panel.online ? "online" : "offline"}"
+            title=${!panel.online && panel.last_seen
+              ? t("last_report_at", {
+                  time: dateTimeFormat.format(new Date(panel.last_seen)),
+                })
+              : nothing}
+          >
             <span class="dot" aria-hidden="true"></span>
             ${panel.online ? t("online") : t("offline")}
           </span>

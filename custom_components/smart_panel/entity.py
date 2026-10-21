@@ -18,8 +18,9 @@ class SmartPanelEntity(Entity):
     _attr_has_entity_name = True
     _attr_should_poll = False
 
-    # State entities have nothing to show before the panel's first report.
-    _requires_report = True
+    # State entities show the panel's last report, which is only current while
+    # the panel is online.
+    _requires_online = True
 
     def __init__(self, entry: SmartPanelConfigEntry, panel: Panel, key: str) -> None:
         """Initialize the entity."""
@@ -33,8 +34,8 @@ class SmartPanelEntity(Entity):
 
     @property
     def available(self) -> bool:
-        """Return whether the entity has a state to show."""
-        return not self._requires_report or self.panel.status is not None
+        """Return whether the entity has a current state to show."""
+        return not self._requires_online or self.panel.online
 
     async def async_added_to_hass(self) -> None:
         """Follow the panel's reports and online state."""

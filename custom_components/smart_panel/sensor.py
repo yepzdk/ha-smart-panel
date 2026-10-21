@@ -47,6 +47,8 @@ class LastSeenSensor(SmartPanelEntity, SensorEntity):
 
     _attr_device_class = SensorDeviceClass.TIMESTAMP
     _attr_entity_category = EntityCategory.DIAGNOSTIC
+    # Shows when the last report arrived, also once the panel is offline.
+    _requires_online = False
 
     @property
     def native_value(self) -> datetime | None:

@@ -101,6 +101,10 @@ Each panel is a device with:
 | Connectivity | Online when the panel reported within 35 minutes |
 | Home Assistant app version, Last seen | Diagnostic sensors |
 
+While a panel is offline only Connectivity, Last seen and the buttons are
+available; the other entities come back with its next report. The last report
+and its time are kept across Home Assistant restarts.
+
 Actions:
 
 - `smart_panel.navigate`: open a page on a panel, for example

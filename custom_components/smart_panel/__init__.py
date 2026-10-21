@@ -25,6 +25,7 @@ from .sidebar import (
     async_register_static_path,
     async_remove_sidebar_panel,
 )
+from .store import ReportStore
 from .websocket import async_register_websocket_commands
 
 PLATFORMS = [
@@ -50,12 +51,21 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
 async def async_setup_entry(hass: HomeAssistant, entry: SmartPanelConfigEntry) -> bool:
     """Set up Smart Panel from a config entry."""
     coordinator = LatestReleaseCoordinator(hass, entry)
+    reports = ReportStore(hass)
+    stored = await reports.async_load()
+    panels = async_create_panels(hass, entry, stored)
     entry.runtime_data = SmartPanelData(
         coordinator=coordinator,
-        panels=async_create_panels(hass, entry),
+        reports=reports,
+        panels=panels,
         linked_ha_url=entry.options[CONF_HA_URL],
     )
     entry.async_on_unload(lambda: async_cancel_timers(entry))
+    entry.async_on_unload(lambda: reports.async_flush(panels))
+    # Reports of panels removed while the entry was not loaded, or that could
+    # not be read, are dropped from the stored data.
+    if reports.needs_rewrite or stored.keys() - {p.ref for p in panels.values()}:
+        reports.async_schedule_save(panels)
 
     # GitHub being unreachable must not keep the panels from working, so a
     # failed lookup only leaves the latest version unknown until the next try.
@@ -101,5 +111,6 @@ async def async_unload_entry(hass: HomeAssistant, entry: SmartPanelConfigEntry) 
 
 
 async def async_remove_entry(hass: HomeAssistant, entry: SmartPanelConfigEntry) -> None:
-    """Tell every panel to stop reporting when the integration is removed."""
+    """Tell every panel to stop reporting and forget the stored reports."""
     await async_unlink_all(hass, entry)
+    await ReportStore(hass).async_remove()
