@@ -12,3 +12,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Smart Panels sidebar page: a Setup tab with the Wi-Fi settings, the provisioning QR code and an enrolment guide, and a Manage tab to send commands to each panel.
 - Panels as devices with entities for the screen, brightness, maintenance mode, reload, restart and app updates, plus `smart_panel.navigate` and `smart_panel.factory_reset` actions.
 - Live panel status (online, versions, screen, brightness, maintenance mode) reported by the panel app.
+- The QR code tells the panel which Wi-Fi network to keep, so a network joined earlier in the setup wizard is forgotten; the enrolment guide explains how to skip that Wi-Fi screen.

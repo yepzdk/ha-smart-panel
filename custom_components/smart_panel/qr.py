@@ -26,8 +26,9 @@ def provisioning_payload(options: Mapping[str, Any]) -> dict[str, Any]:
     """Return the provisioning JSON object for the current settings.
 
     Same keys as `provisioning/make-qr.sh` in the DPC repository, plus the
-    Home Assistant URL in the admin extras and the hidden flag for hidden
-    networks.
+    Home Assistant URL and the network name in the admin extras and the hidden
+    flag for hidden networks. The panel app forgets every saved network except
+    this one, so a network joined earlier in the setup wizard is dropped.
     """
     payload: dict[str, Any] = {
         f"{_EXTRA}PROVISIONING_DEVICE_ADMIN_COMPONENT_NAME": DPC_ADMIN_COMPONENT,
@@ -40,6 +41,7 @@ def provisioning_payload(options: Mapping[str, Any]) -> dict[str, Any]:
         f"{_EXTRA}PROVISIONING_ADMIN_EXTRAS_BUNDLE": {
             "ha_apk_url": HA_APK_URL,
             "ha_url": options[CONF_HA_URL],
+            "wifi_ssid": options[CONF_WIFI_SSID],
         },
     }
     if options[CONF_WIFI_HIDDEN]:

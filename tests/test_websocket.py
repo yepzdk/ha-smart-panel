@@ -201,6 +201,7 @@ def test_provisioning_payload() -> None:
                 "app-minimal-release.apk"
             ),
             "ha_url": HA_URL,
+            "wifi_ssid": "Home",
         },
     }
 

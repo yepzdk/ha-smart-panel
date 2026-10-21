@@ -67,6 +67,7 @@ export const printQr = async (
   const steps = add(doc.body, "ol");
   for (const key of [
     "print_step_reset",
+    "print_step_wifi",
     "print_step_tap",
     "print_step_scan",
     "print_step_finish",

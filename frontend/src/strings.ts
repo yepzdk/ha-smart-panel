@@ -81,6 +81,8 @@ const STRINGS = {
   print_title: "Set up a smart panel",
   print_network: "Wi-Fi network: {ssid}",
   print_step_reset: "Factory reset the device.",
+  print_step_wifi:
+    "If the setup wizard asks you to join a Wi-Fi network before the QR scanner, skip it or choose the network from the QR code.",
   print_step_tap: "Tap the welcome screen 6 times.",
   print_step_scan: "Scan this QR code and join the network.",
   print_step_finish:
@@ -96,6 +98,9 @@ const STRINGS = {
   step_reset:
     "On the device, open Settings > System > Reset options > Erase all data. The menu names differ a little between manufacturers.",
   step_reset_panel: "Already a panel? Use Factory reset on the {manage} tab instead.",
+  step_wifi_title: "Skip the Wi-Fi screen",
+  step_wifi:
+    "If the setup wizard asks you to join a Wi-Fi network before the QR scanner, skip it or choose the network from the QR code.",
   step_tap_title: "Tap the welcome screen 6 times",
   step_tap:
     "On the first setup screen, tap the same empty spot 6 times. The device opens a QR code scanner.",

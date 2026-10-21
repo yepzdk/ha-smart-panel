@@ -46,11 +46,14 @@ Panel**. **Smart Panels** appears in the sidebar for administrators.
 1. On the **Setup** tab, enter the Wi-Fi network the panel joins and the Home
    Assistant address. The QR code updates when you save. It contains the
    Wi-Fi password, so treat a printout like the password.
-2. Factory reset the device. On the welcome screen, tap the same spot six
-   times, scan the QR code, and finish every setup screen.
-3. The Home Assistant app opens at your address. Log in with the user the
+2. Factory reset the device. If the setup wizard asks you to join a Wi-Fi
+   network before the QR scanner, skip it or choose the network from the QR
+   code.
+3. On the welcome screen, tap the same spot six times, scan the QR code, and
+   finish every setup screen.
+4. The Home Assistant app opens at your address. Log in with the user the
    panel should use, and enable **Fullscreen** under Settings → Companion app.
-4. On the **Manage** tab, choose **Add panel** and pick the new registration.
+5. On the **Manage** tab, choose **Add panel** and pick the new registration.
    Panels run the minimal Home Assistant app, so they are marked and listed
    first.
 

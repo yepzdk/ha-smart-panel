@@ -493,6 +493,7 @@ export class SmartPanelSetup extends LitElement {
         html`${t("step_reset")}
           <span class="block">${withLink(t("step_reset_panel"), "manage", manageLink)}</span>`,
       ],
+      ["step_wifi_title", t("step_wifi")],
       ["step_tap_title", t("step_tap")],
       ["step_scan_title", t("step_scan")],
       ["step_finish_title", t("step_finish")],
