@@ -55,11 +55,11 @@ async def test_entities_before_first_report(
         AUTO_BRIGHTNESS,
         BRIGHTNESS,
         HA_APP_VERSION,
-        LAST_SEEN,
         PANEL_APP,
     ):
         assert hass.states.get(entity_id).state == STATE_UNAVAILABLE, entity_id
     assert hass.states.get(CONNECTIVITY).state == STATE_OFF
+    assert hass.states.get(LAST_SEEN).state == STATE_UNKNOWN
     assert hass.states.get(RESTART).state != STATE_UNAVAILABLE
 
 
@@ -149,6 +149,7 @@ async def test_panel_goes_offline_after_35_minutes(
     freezer: FrozenDateTimeFactory,
 ) -> None:
     """Without a report for 35 minutes the panel is offline."""
+    freezer.move_to("2026-10-21T10:00:00+00:00")
     await _post(hass, hass_client_no_auth, kitchen_report())
     assert hass.states.get(CONNECTIVITY).state == STATE_ON
 
@@ -168,8 +169,11 @@ async def test_panel_goes_offline_after_35_minutes(
     async_fire_time_changed(hass)
     await hass.async_block_till_done()
     assert hass.states.get(CONNECTIVITY).state == STATE_OFF
-    # The last known state stays visible.
-    assert hass.states.get(SCREEN).state == STATE_ON
+    # The report is no longer current; only its time stays visible.
+    assert hass.states.get(SCREEN).state == STATE_UNAVAILABLE
+    assert hass.states.get(PANEL_APP).state == STATE_UNAVAILABLE
+    assert hass.states.get(LAST_SEEN).state == "2026-10-21T10:34:00+00:00"
+    assert hass.states.get(RESTART).state != STATE_UNAVAILABLE
 
 
 @pytest.mark.parametrize(

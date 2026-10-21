@@ -43,8 +43,8 @@ class PanelAppUpdate(
 
     @property
     def available(self) -> bool:
-        """Return whether the panel has reported; a failed lookup leaves latest unknown."""
-        return self.panel.status is not None
+        """Return whether the panel is online; a failed lookup leaves latest unknown."""
+        return self.panel.online
 
     @property
     def installed_version(self) -> str | None:

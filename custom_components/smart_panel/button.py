@@ -40,7 +40,7 @@ class PanelCommandButton(SmartPanelEntity, ButtonEntity):
     """A button that sends one command to the panel."""
 
     # Commands go through the Companion app and do not need a report first.
-    _requires_report = False
+    _requires_online = False
 
     def __init__(
         self,

@@ -33,8 +33,8 @@ class ConnectivitySensor(SmartPanelEntity, BinarySensorEntity):
 
     _attr_device_class = BinarySensorDeviceClass.CONNECTIVITY
     _attr_entity_category = EntityCategory.DIAGNOSTIC
-    # A panel that never reported is offline, which is a known state.
-    _requires_report = False
+    # Offline is a known state, also for a panel that never reported.
+    _requires_online = False
 
     @property
     def is_on(self) -> bool:

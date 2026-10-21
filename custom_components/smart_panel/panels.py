@@ -2,6 +2,7 @@
 
 import asyncio
 from collections.abc import Mapping
+from datetime import timedelta
 import logging
 import re
 from types import MappingProxyType
@@ -39,7 +40,7 @@ from .const import (
     signal_panel_added,
     signal_panel_updated,
 )
-from .models import Panel, SmartPanelConfigEntry
+from .models import Panel, SmartPanelConfigEntry, StoredReport
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -183,11 +184,22 @@ def async_add_panel(
 
 
 @callback
-def async_create_panels(hass: HomeAssistant, entry: ConfigEntry) -> dict[str, Panel]:
-    """Create the runtime panels and their devices for a config entry being set up."""
+def async_create_panels(
+    hass: HomeAssistant, entry: ConfigEntry, stored: Mapping[str, StoredReport]
+) -> dict[str, Panel]:
+    """Create the runtime panels and their devices for a config entry being set up.
+
+    Each panel gets back the report it sent before the restart. A panel whose
+    report is recent enough is online right away and goes offline when that
+    report is as old as the online timeout.
+    """
     panels: dict[str, Panel] = {}
     for subentry_id, subentry in _panel_subentries(entry).items():
         panel = Panel.from_subentry(subentry)
+        if (report := stored.get(panel.ref)) is not None:
+            panel.status = report.status
+            panel.last_seen = report.received
+            _async_track_offline(hass, panel)
         _async_update_device(hass, entry, panel)
         panels[subentry_id] = panel
     return panels
@@ -223,9 +235,21 @@ def async_handle_report(
     panel.status = {key: value for key, value in report.items() if key != "ref"}
     panel.last_seen = dt_util.utcnow()
     _async_update_device(hass, entry, panel)
+    _async_track_offline(hass, panel)
+    entry.runtime_data.reports.async_schedule_save(entry.runtime_data.panels)
+    _async_panel_changed(hass, panel)
 
+
+@callback
+def _async_track_offline(hass: HomeAssistant, panel: Panel) -> None:
+    """Mark the panel offline once its last report is as old as the timeout."""
     if panel.cancel_offline_timer is not None:
         panel.cancel_offline_timer()
+        panel.cancel_offline_timer = None
+    assert panel.last_seen is not None
+    delay = panel.last_seen + ONLINE_TIMEOUT - dt_util.utcnow()
+    if delay <= timedelta(0):
+        return
 
     @callback
     def _async_went_offline(_now: Any) -> None:
@@ -237,10 +261,7 @@ def async_handle_report(
         )
         _async_panel_changed(hass, panel)
 
-    panel.cancel_offline_timer = async_call_later(
-        hass, ONLINE_TIMEOUT, _async_went_offline
-    )
-    _async_panel_changed(hass, panel)
+    panel.cancel_offline_timer = async_call_later(hass, delay, _async_went_offline)
 
 
 @callback
@@ -361,6 +382,10 @@ async def async_sync_panels(hass: HomeAssistant, entry: SmartPanelConfigEntry) -
         if panel.cancel_offline_timer is not None:
             panel.cancel_offline_timer()
             panel.cancel_offline_timer = None
+
+    if removed:
+        # The stored reports follow the panels, so a removed one is dropped.
+        data.reports.async_schedule_save(data.panels)
 
     added: list[Panel] = []
     for subentry_id, subentry in subentries.items():

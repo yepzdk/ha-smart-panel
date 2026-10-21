@@ -14,8 +14,17 @@ from .const import CONF_MOBILE_APP_ENTRY_ID, CONF_REF, ONLINE_TIMEOUT
 
 if TYPE_CHECKING:
     from .coordinator import LatestReleaseCoordinator
+    from .store import ReportStore
 
 type SmartPanelConfigEntry = ConfigEntry[SmartPanelData]
+
+
+@dataclass(frozen=True, slots=True)
+class StoredReport:
+    """A panel's last report and when it arrived, kept across restarts."""
+
+    status: dict[str, Any]
+    received: datetime
 
 
 @dataclass
@@ -56,6 +65,7 @@ class SmartPanelData:
     """Data held by a loaded config entry."""
 
     coordinator: LatestReleaseCoordinator
+    reports: ReportStore
     panels: dict[str, Panel]
     # The Home Assistant URL the panels were last linked with. A changed URL
     # means every panel needs a new status URL.
