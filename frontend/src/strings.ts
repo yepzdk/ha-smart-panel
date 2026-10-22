@@ -115,6 +115,8 @@ const STRINGS = {
   step_login_title: "Log in with the dashboard user",
   step_login:
     "The Home Assistant address is already filled in. Log in with the user whose dashboard the panel should show.",
+  step_login_guide: "First panel? See {guide}.",
+  step_login_guide_link: "how to set up a user and dashboard for a panel",
   step_fullscreen_title: "Turn on fullscreen",
   step_fullscreen:
     "In the Home Assistant app, open Settings > Companion app and turn on Fullscreen.",
