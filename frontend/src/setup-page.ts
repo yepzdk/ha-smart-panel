@@ -89,6 +89,10 @@ const withLink = (
   return html`${before}${link}${after}`;
 };
 
+/** The guide for panel users, dashboards and kiosk-mode, in the repository. */
+const PANEL_SETUP_GUIDE_URL =
+  "https://github.com/yepzdk/ha-smart-panel/blob/main/docs/panel-setup.md";
+
 @defineOnce("smart-panel-setup")
 export class SmartPanelSetup extends LitElement {
   @property({ attribute: false }) accessor hass!: HomeAssistant;
@@ -498,7 +502,21 @@ export class SmartPanelSetup extends LitElement {
       ["step_tap_title", t("step_tap")],
       ["step_scan_title", t("step_scan")],
       ["step_finish_title", t("step_finish")],
-      ["step_login_title", t("step_login")],
+      [
+        "step_login_title",
+        html`${t("step_login")}
+          <span class="block"
+            >${withLink(
+              t("step_login_guide"),
+              "guide",
+              html`<a href=${PANEL_SETUP_GUIDE_URL} target="_blank" rel="noopener noreferrer"
+                >${t("step_login_guide_link")}<span class="visually-hidden">
+                  ${t("opens_new_tab")}</span
+                ></a
+              >`,
+            )}</span
+          >`,
+      ],
       ["step_fullscreen_title", t("step_fullscreen")],
       ["step_add_title", withLink(t("step_add"), "manage", manageLink)],
     ];

@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- A guide to setting up a user, default dashboard and kiosk view for each panel, linked from the Setup tab's login step and the README.
+
 ## [0.1.1] - 2026-10-21
 
 ### Changed

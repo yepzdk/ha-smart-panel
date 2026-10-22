@@ -62,6 +62,8 @@ Panel**. **Smart Panels** appears in the sidebar for administrators.
    finish every setup screen.
 4. The Home Assistant app opens at your address. Log in with the user the
    panel should use, and enable **Fullscreen** under Settings → Companion app.
+   For a user, default dashboard and kiosk view per panel, see
+   [Setting up users and dashboards for panels](docs/panel-setup.md).
 5. On the **Manage** tab, choose **Add panel** and pick the new registration.
    Panels run the minimal Home Assistant app, so they are marked and listed
    first.
