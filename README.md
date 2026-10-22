@@ -17,6 +17,12 @@ it fullscreen. This integration is the Home Assistant side:
   factory reset.
 - **Automations**: each panel is a device with entities and actions.
 
+![The Setup tab: Wi-Fi and Home Assistant address, the setup QR code, and the steps to set up a panel](docs/images/setup.png)
+
+![The Manage tab: two panels with their status, screen, brightness, maintenance mode and app versions](docs/images/manage.png)
+
+Screenshots show example data; the QR code in them is not a setup code.
+
 ## Status
 
 **0.1 — in testing.** Not yet in the HACS default store.
